@@ -5,6 +5,7 @@ import 'package:provider_pak_app/models/product_model.dart';
 import 'package:provider_pak_app/pages/cart_page.dart';
 import 'package:provider_pak_app/pages/favorite_page.dart';
 import 'package:provider_pak_app/providers/cart_provider.dart';
+import 'package:provider_pak_app/providers/favourite_provider.dart';
 
 class ProductPage extends StatelessWidget {
   const ProductPage({super.key});
@@ -66,9 +67,11 @@ class ProductPage extends StatelessWidget {
         itemBuilder: (context, index) {
           final Product product = products[index];
           return Card(
-            child: Consumer(
+            child: Consumer2<CartProvider, FavouriteProvider>(
+              // ignore: non_constant_identifier_names
               builder: (BuildContext context, CartProvider CartProvider,
-                  Widget? child) {
+                  // ignore: non_constant_identifier_names
+                  FavouriteProvider FavouriteProvider, Widget? child) {
                 return ListTile(
                   title: Row(
                     children: [
@@ -82,13 +85,12 @@ class ProductPage extends StatelessWidget {
                       const SizedBox(
                         width: 20,
                       ),
-                      //todo:fill this
-                      const Text(
-                        "0",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      Text(
+                        CartProvider.items.containsKey(product.id)
+                            ? CartProvider.items[product.id]!.quantity
+                                .toString()
+                            : "0",
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -97,17 +99,47 @@ class ProductPage extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        onPressed: () {},
-                        icon: const Icon(
-                          Icons.favorite,
+                        onPressed: () {
+                          FavouriteProvider.toggleFavourites(product.id);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                FavouriteProvider.isFavourite(product.id)
+                                    ? "Added to favorite!"
+                                    : "Remove from favourite!",
+                              ),
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        },
+                        icon: Icon(
+                          FavouriteProvider.isFavourite(product.id)
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          color: FavouriteProvider.isFavourite(product.id)
+                              ? Colors.pinkAccent
+                              : Colors.grey,
                         ),
                       ),
                       IconButton(
                         onPressed: () {
-                          CartProvider.addItem(product.id, product.price, product.title);
+                          CartProvider.addItem(
+                            product.id,
+                            product.price,
+                            product.title,
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Added to cart!"),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
                         },
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.shopping_cart,
+                          color: CartProvider.items.containsKey(product.id)
+                              ? Colors.deepOrange
+                              : Colors.grey,
                         ),
                       ),
                     ],
